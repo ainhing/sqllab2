@@ -1,0 +1,132 @@
+import functools
+from PyQt6.QtWidgets import QPushButton
+
+from KTLT.py.chap2.d9125.ex45.ex45 import Ui_MainWindow
+
+
+class MainWindow45(Ui_MainWindow):
+    def __init__(self):
+        self.dataset=[]
+        self.selected_index = -1
+        self.previous_button = None
+    def setupUi(self, MainWindow):
+        super().setupUi(MainWindow)
+        self.MainWindow = MainWindow
+        self.setupSignalansSlot()
+
+    def show(self):
+        self.MainWindow.show()
+
+    def setupSignalansSlot(self):
+        self.pushButtonsave.clicked.connect(self.process_savebook)
+        self.pushButtonremove.clicked.connect(self.process_removebook)
+        self.pushButtonfilterpulisher.clicked.connect(self.process_pulisher)
+        self.pushButtonfilteryear.clicked.connect(self.process_year)
+        self.pushButtonsearchisbn.clicked.connect(self.process_isbn)
+        self.pushButtonsearchtilte.clicked.connect(self.process_title)
+    def check_duplicated_isbn(self,isbn):
+        for book in self.dataset:
+            if book["isbn"]==isbn:
+                return True
+        return False
+    def process_savebook(self):
+        isbn=self.lineEditisbn.text()
+        title=self.lineEdittilte.text()
+        author=self.lineEditauthor.text()
+        pulishier=self.lineEditpulishier.text()
+        year=self.lineEdityear.text()
+        book={"isbn":isbn,
+              "title":title,"author":author,
+              "pulishier":pulishier,"year":year}
+        if self.check_duplicated_isbn(isbn)==False:
+            self.dataset.append(book)
+        else:
+            self.dataset[self.selected_index]=book
+        self.draw_button_into_box()
+        self.showbook_ongui()
+    def showbook_ongui(self):
+        pass
+    def clearLayout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                  widget.deleteLater()
+                else:
+                  self.clearLayout(item.layout())
+    def draw_button_into_box(self):
+        self.clearLayout((self.verticalLayoutBook))
+        for i in range (len(self.dataset)):
+            book=self.dataset[i]
+            title = f"{book['title']}"
+            isbn= f"{book['isbn']}"
+            author = f"{book['author']}"
+            pulishier=f"{book['pulishier']}"
+            year = f"{book['year']}"
+            btn_text=f" {isbn},  {title},  {author},  {year},  {pulishier}"
+            btn = QPushButton(text=btn_text)
+            btn.setStyleSheet("background-color: rgb(155, 156, 152);")
+            self.verticalLayoutBook.addWidget(btn)
+            btn.clicked.connect(functools.partial(self.show_detail,i))
+    def show_detail(self,i):
+        book=self.dataset[i]
+        self.lineEditisbn.setText(book["isbn"])
+        self.lineEdittilte.setText(book["title"])
+        self.lineEditauthor.setText(book["author"])
+        self.lineEditpulishier.setText(book["pulishier"])
+        self.lineEdityear.setText(book["year"])
+        self.selected_index = i
+        btn = self.MainWindow.sender()
+        if self.previous_button!=None:
+            self.previous_button.setStyleSheet("background-color: rgb(155, 156, 152);")
+        btn.setStyleSheet("background-color: rgb(235, 225, 52);")
+        self.previous_button=btn
+
+    def process_removebook(self):
+        if self.selected_index >= 0:
+            del self.dataset[self.selected_index]
+            self.selected_index = -1
+            self.previous_button = None
+            self.clearLayout(self.verticalLayoutBook)
+            self.draw_button_into_box()
+
+    def process_title(self):
+        title = self.lineEdittilte.text()
+        matching_books = [book for book in self.dataset if book['title'].lower() == title.lower()]
+        self.update_book_list(matching_books)
+
+    def process_year(self):
+        year = self.lineEdityear.text()
+        matching_books = [book for book in self.dataset if book['year'] == year]
+        self.update_book_list(matching_books)
+
+    def process_isbn(self):
+        isbn = self.lineEditisbn.text()
+        matching_books = [book for book in self.dataset if book['isbn'] == isbn]
+        self.update_book_list(matching_books)
+
+    def process_pulisher(self):
+        publisher = self.lineEditpulishier.text()
+        matching_books = [book for book in self.dataset if book['publisher'].lower() == publisher.lower()]
+        self.update_book_list(matching_books)
+
+    def update_book_list(self, books):
+        self.clearLayout(self.verticalLayoutBook)
+        for i, book in enumerate(books):
+            title = book['title']
+            isbn = book['isbn']
+            author = book['author']
+            publisher = book['publisher']
+            year = book['year']
+            btn_text = f" {isbn},  {title},  {author},  {year},  {publisher}"
+            btn = QPushButton(text=btn_text)
+            btn.setStyleSheet("background-color: rgb(155, 156, 152);")
+            self.verticalLayoutBook.addWidget(btn)
+            btn.clicked.connect(functools.partial(self.show_detail, i))
+
+
+
+
+
+
